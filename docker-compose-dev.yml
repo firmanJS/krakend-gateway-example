@@ -1,0 +1,50 @@
+version: "3"
+services:
+  fake_api:
+    image: jaxgeller/lwan
+    networks:
+      - gateway-service
+    env_file:
+      - .env
+    volumes:
+      - ./data:/lwan/wwwroot
+    ports:
+      - "${FAKE_API_PORT}:8080"
+  krakend_ce:
+    # platform: linux/amd64
+    image: firmanjs/gateway-service:dev
+    build:
+      dockerfile: Dockerfile.local
+      context: ./krakend
+    networks:
+      - gateway-service
+    env_file:
+      - .env
+    ports:
+      - "${KRAKEND_CE_PORT_1}:1234"
+      - "${KRAKEND_CE_PORT_2}:${KRAKEND_CE_PORT_2}"
+      - "${KRAKEND_CE_PORT_3}:${KRAKEND_CE_PORT_3}"
+    depends_on:
+      - fake_api
+  jwt_revoke:
+    image: firmanjs/gateway-service:go
+    build:
+      context: ./jwt-revoker
+    networks:
+      - gateway-service
+    env_file:
+      - .env
+    ports:
+      - "${JWT_REVOKER}:8080"
+    depends_on:
+      - krakend_ce
+    healthcheck:
+      test: ["CMD", "docker", "port", "krakend_ce", "${KRAKEND_CE_PORT_1}"]
+      interval: 200s
+      timeout: 200s
+      retries: 5
+
+
+networks:
+  gateway-service:
+    driver: bridge

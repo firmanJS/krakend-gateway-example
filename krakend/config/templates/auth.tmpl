@@ -1,0 +1,76 @@
+{
+  "endpoint": "/signin",
+  "method": "POST",
+  "timeout": "3s",
+  "backend": [
+    {
+      "host": {{ marshal .env.application_url }},
+      "url_pattern": "{{ .env.application_tag }}/auth/signin"
+    }
+  ],
+  "extra_config": {
+    {{ include "signer_admin.tmpl" }},
+    "validation/json-schema": {
+      "type": "object",
+      "required": [
+        "username",
+        "password"
+      ],
+      "properties": {
+        "username": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        }
+      }
+    }
+  }
+},
+{
+  "endpoint": "/refresh-token",
+  "method": "GET",
+  "input_headers": {{ include "post_header.tmpl" }},
+  "extra_config": {
+    {{ include "signer_validation_admin.tmpl" }},
+    {{ include "signer_admin.tmpl" }}
+  },
+  "backend": [
+    {
+      "method": "GET",
+      "host": {{ marshal .env.application_url }},
+      "url_pattern": "{{ .env.application_tag }}/auth/refresh-token"
+    }
+  ]
+},
+{
+  "endpoint": "/me",
+  "method": "GET",
+  "input_headers": {{ include "post_header.tmpl" }},
+  "extra_config": {
+    {{ include "signer_validation_admin.tmpl" }}
+  },
+  "backend": [
+    {
+      "method": "GET",
+      "host": {{ marshal .env.application_url }},
+      "url_pattern": "{{ .env.application_tag }}/auth/me"
+    }
+  ]
+},
+{
+  "endpoint": "/logout",
+  "output_encoding": "no-op",
+  "method": "GET",
+  "extra_config": {
+    {{ include "signer_validation_admin.tmpl" }}
+  },
+  "backend": [
+    {
+      "method": "GET",
+      "host": "http://jwt_revoke:8080",
+      "url_pattern": "/add/?jti={JWT.jti}",
+      "encoding": "no-op"
+    }
+  ]
+}
