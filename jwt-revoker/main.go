@@ -24,14 +24,6 @@ func main() {
 	}
 	defer c.Close()
 
-	http.HandleFunc("/add/", func(w http.ResponseWriter, r *http.Request) {
-		r.ParseForm()
-		subject := *key + "-" + r.FormValue(*key)
-		c.Add([]byte(subject))
-		log.Printf("adding [%s] %s", *key, subject)
-		http.Redirect(w, r, "/", 302)
-	})
-
 	http.HandleFunc("/check/", func(w http.ResponseWriter, r *http.Request) {
 		r.ParseForm()
 		subject := *key + "-" + r.FormValue(*key)
